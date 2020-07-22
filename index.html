@@ -1,88 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="shortcut icon" href="favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
 <meta charset="UTF-8" />
+<link rel="shortcut icon" href="favicon.ico">
 <script type="text/javascript" src="speedtest.js"></script>
 <script type="text/javascript">
 function I(i){return document.getElementById(i);}
-
-//LIST OF TEST SERVERS. See documentation for details if needed
-var SPEEDTEST_SERVERS=[
-	{	//this is my demo server, remove it
-		name:"Speedtest Demo Server (Helsinki)", //user friendly name for the server
-		server:"//fi.openspeed.org/", //URL to the server. // at the beginning will be replaced with http:// or https:// automatically
-		dlURL:"garbage.php",  //path to download test on this server (garbage.php or replacement)
-		ulURL:"empty.php",  //path to upload test on this server (empty.php or replacement)
-		pingURL:"empty.php",  //path to ping/jitter test on this server (empty.php or replacement)
-		getIpURL:"getIP.php"  //path to getIP on this server (getIP.php or replacement)
-	},
-	{	//this is my demo server, remove it
-		name:"Armbian Server (Hg680p)", //user friendly name for the server
-		server:"//192.168.11.11/speedtest/backend/", //URL to the server. // at the beginning will be replaced with http:// or https:// automatically
-		dlURL:"garbage.php",  //path to download test on this server (garbage.php or replacement)
-		ulURL:"empty.php",  //path to upload test on this server (empty.php or replacement)
-		pingURL:"empty.php",  //path to ping/jitter test on this server (empty.php or replacement)
-		getIpURL:"getIP.php"  //path to getIP on this server (getIP.php or replacement)
-	},
-	{	//this is my demo server, remove it
-		name:"Telkom Surabaya Server",
-		server:"//surabaya.speedtest.telkom.net.id.prod.hosts.ooklaserver.net:8080",
-		dlURL:"download",
-		ulURL:"upload",
-		pingURL:"hello",
-		getIpURL:"hello"
-	}
-	//add other servers here, comma separated https://speedtest-eir.idola.net.id:8080/hello?nocache=e5e89ea2-9441-411f-89d5-7c9ba4cbc947&guid=3c67e0c8-b93d-485e-94f7-22a3c0117088   https://surabaya.speedtest.telkom.net.id.prod.hosts.ooklaserver.net:8080/upload?nocache=d95f6759-f32c-4bc6-b6b4-0b58159d95b3&guid=7eaa2989-b744-4a40-b918-20a100fcc808   https://surabaya.speedtest.telkom.net.id.prod.hosts.ooklaserver.net:8080/download?nocache=ff095620-5fc6-4d63-816a-dadfb891a54a&size=25000000&guid=7eaa2989-b744-4a40-b918-20a100fcc808
-];
-
 //INITIALIZE SPEEDTEST
 var s=new Speedtest(); //create speedtest object
 s.setParameter("telemetry_level","basic"); //enable telemetry
-
-//SERVER AUTO SELECTION
-function initServers(){
-    var noServersAvailable=function(){
-        I("message").innerHTML="No servers available";
-    }
-    var runServerSelect=function(){
-        s.selectServer(function(server){
-            if(server!=null){ //at least 1 server is available
-                I("loading").className="hidden"; //hide loading message
-                //populate server list for manual selection
-                for(var i=0;i<SPEEDTEST_SERVERS.length;i++){
-                    if(SPEEDTEST_SERVERS[i].pingT==-1) continue;
-                    var option=document.createElement("option");
-                    option.value=i;
-                    option.textContent=SPEEDTEST_SERVERS[i].name;
-                    if(SPEEDTEST_SERVERS[i]===server) option.selected=true;
-                    I("server").appendChild(option);
-                }
-                //show test UI
-                I("testWrapper").className="visible";
-                initUI();
-            }else{ //no servers are available, the test cannot proceed
-                noServersAvailable();
-            }
-        });
-    }
-    if(typeof SPEEDTEST_SERVERS === "string"){
-        //need to fetch list of servers from specified URL
-        s.loadServerList(SPEEDTEST_SERVERS,function(servers){
-            if(servers==null){ //failed to load server list
-                noServersAvailable();
-            }else{ //server list loaded
-                SPEEDTEST_SERVERS=servers;
-                runServerSelect();
-            }
-        });
-    }else{
-        //hardcoded server list
-        s.addTestPoints(SPEEDTEST_SERVERS);
-        runServerSelect();
-    }
-}
 
 var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#80808040";
 var dlColor="#6060AA",
@@ -134,19 +61,16 @@ function startStop(){
 		s.abort();
 		data=null;
 		I("startStopBtn").className="";
-		I("server").disabled=false;
 		initUI();
 	}else{
 		//test is not running, begin
 		I("startStopBtn").className="running";
 		I("shareArea").style.display="none";
-		I("server").disabled=true;
 		s.onupdate=function(data){
             uiData=data;
 		};
 		s.onend=function(aborted){
             I("startStopBtn").className="";
-            I("server").disabled=false;
             updateUI(true);
             if(!aborted){
                 //if testId is present, show sharing panel, otherwise do nothing
@@ -212,25 +136,6 @@ function initUI(){
 	h1{
 		color:#404040;
 	}
-	#loading{
-		background-color:#FFFFFF;
-		color:#404040;
-		text-align:center;
-	}
-	span.loadCircle{
-		display:inline-block;
-		width:2em;
-		height:2em;
-		vertical-align:middle;
-		background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAP1BMVEUAAAB2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZyFzwnAAAAFHRSTlMAEvRFvX406baecwbf0casimhSHyiwmqgAAADpSURBVHja7dbJbQMxAENRahnN5lkc//5rDRAkDeRgHszXgACJoKiIiIiIiIiIiIiIiIiIiIj4HHspsrpAVhdVVguzrA4OWc10WcEqpwKbnBo0OU1Q5NSpsoJFTgOecrrdEag85DRgktNqfoEdTjnd7hrEHMEJvmRUYJbTYk5Agy6nau6Abp5Cm7mDBtRdPi9gyKdU7w4p1fsLvyqs8hl4z9/w3n/Hmr9WoQ65lAU4d7lMYOz//QboRR5jBZibLMZdAR6O/Vfa1PlxNr3XdS3HzK/HVPRu/KnLs8iAOh993VpRRERERMT/fAN60wwWaVyWwAAAAABJRU5ErkJggg==');
-		background-size:2em 2em;
-		margin-right:0.5em;
-		animation: spin 0.6s linear infinite;
-	}
-	@keyframes spin{
-		0%{transform:rotate(0deg);}
-		100%{transform:rotate(359deg);}
-	}
 	#startStopBtn{
 		display:inline-block;
 		margin:0 auto;
@@ -258,13 +163,6 @@ function initUI(){
 	}
 	#startStopBtn.running:before{
 		content:"Abort";
-	}
-	#serverArea{
-		margin-top:1em;
-	}
-	#server{
-		font-size:1em;
-		padding:0.2em;
 	}
 	#test{
 		margin-top:2em;
@@ -377,50 +275,18 @@ function initUI(){
 			font-size:0.8em;
 		}
 	}
-	div.visible{
-		animation: fadeIn 0.4s;
-		display:block;
-	}
-	div.hidden{
-		animation: fadeOut 0.4s;
-		display:none;
-	}
-	@keyframes fadeIn{
-		0%{
-			opacity:0;
-		}
-		100%{
-			opacity:1;
-		}
-	}
-	@keyframes fadeOut{
-		0%{
-			display:block;
-			opacity:1;
-		}
-		100%{
-			display:block;
-			opacity:0;
-		}
-	}
 </style>
-<title>WAN - Speedtest</title>
+<title>LAN - Speedtest</title>
 </head>
-<body onload="initServers()">
-<h1>WAN - Speedtest</h1>
+<body>
+<h1>LAN - Speedtest</h1>
 <p>Free and Open Source Speedtest. No Flash, No Java, No Websocket, No Bullshit.</p>
-<div id="loading" class="visible">
-	<p id="message"><span class="loadCircle"></span>Selecting a server...</p>
-</div>
-<div id="testWrapper" class="hidden">
+<div id="testWrapper">
 	<div id="startStopBtn" onclick="startStop()"></div>
-	<a class="privacy" href="index.html">Test LAN</a>
-	<div id="serverArea">
-		Server: <select id="server" onchange="s.setSelectedServer(SPEEDTEST_SERVERS[this.value])"></select>
-	</div>
+	<a class="privacy" href="example-multipleServers-full.html">Test WAN</a>
 	<div id="test">
 		<div class="testGroup">
-            <div class="testArea2">
+			<div class="testArea2">
 				<div class="testName">Ping</div>
 				<div id="pingText" class="meterText" style="color:#AA6060"></div>
 				<div class="unit">ms</div>
@@ -494,5 +360,6 @@ function initUI(){
     <br/><br/>
     <a class="privacy" href="#" onclick="I('privacyPolicy').style.display='none'">Close</a><br/>
 </div>
+<script type="text/javascript">setTimeout(function(){initUI()},100);</script>
 </body>
 </html>
